@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GigGuard — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0d14;--surface:#111520;--card:#161c2b;--border:rgba(255,255,255,0.07);--border-s:rgba(255,255,255,0.14);--text:#e8eaf2;--muted:#6b7280;--accent:#3b82f6;--green:#10b981;--gs:rgba(16,185,129,0.12);--amber:#f59e0b;--as:rgba(245,158,11,0.12);--red:#ef4444;--rs:rgba(239,68,68,0.1);--purple:#8b5cf6;--ps:rgba(139,92,246,0.12);--teal:#14b8a6;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
+.app{display:flex;min-height:100vh;}
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;}
+.main{flex:1;overflow-x:hidden;}
+.logo{padding:0 20px 24px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.logo-mark{font-size:18px;font-weight:600;letter-spacing:-0.3px;}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--muted);border-left:2px solid transparent;transition:all 0.15s;}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.nav-item.active{color:var(--text);border-left-color:var(--accent);background:rgba(59,130,246,0.06);}
+.nav-section{font-size:10px;font-weight:600;letter-spacing:0.08em;color:var(--muted);padding:16px 20px 6px;text-transform:uppercase;}
+.worker-badge{margin:auto 16px 0;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.worker-name{font-weight:500;font-size:13px;}
+.worker-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.worker-plan{display:inline-flex;align-items:center;gap:5px;background:var(--ps);border:1px solid rgba(139,92,246,0.2);color:var(--purple);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:500;margin-top:8px;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid var(--border);background:var(--surface);}
+.header-title{font-size:16px;font-weight:500;}
+.header-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.view-toggle{display:flex;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px;}
+.vt-btn{padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--muted);border:none;background:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.vt-btn.active{background:var(--accent);color:white;}
+.content{padding:24px 28px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.card-title{font-size:11px;font-weight:600;letter-spacing:0.06em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.stat-value{font-size:26px;font-weight:500;letter-spacing:-0.5px;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.stat-glow{position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;filter:blur(30px);opacity:0.4;}
+.risk-banner{border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.risk-banner.amber{background:var(--as);border:1px solid rgba(245,158,11,0.2);}
+.risk-banner.green{background:var(--gs);border:1px solid rgba(16,185,129,0.2);}
+.risk-banner.red{background:var(--rs);border:1px solid rgba(239,68,68,0.2);}
+.risk-status{display:flex;align-items:center;gap:10px;}
+.risk-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.risk-dot.amber{background:var(--amber);animation:pa 2s infinite;}
+.risk-dot.green{background:var(--green);animation:pa 2s infinite;}
+@keyframes pa{0%,100%{opacity:1}50%{opacity:0.4}}
+.risk-label{font-weight:500;font-size:14px;}
+.risk-zone{font-size:12px;color:var(--muted);margin-top:2px;}
+.drs-badge{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;padding:6px 14px;border-radius:8px;}
+.drs-badge.amber{background:var(--as);color:var(--amber);}
+.drs-badge.green{background:var(--gs);color:var(--green);}
+.event-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.event-row:last-child{border-bottom:none;}
+.event-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.event-info{flex:1;min-width:0;}
+.event-title{font-size:13px;font-weight:500;}
+.event-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.event-amount{font-size:14px;font-weight:500;color:var(--green);}
+.event-status{font-size:10px;font-weight:600;letter-spacing:0.04em;padding:3px 8px;border-radius:5px;margin-top:3px;display:inline-block;}
+.status-paid{background:var(--gs);color:var(--green);}
+.status-held{background:var(--as);color:var(--amber);}
+.wa-phone{background:#111;border-radius:16px;padding:16px;border:1px solid var(--border-s);max-width:280px;}
+.wa-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08);}
+.wa-avatar{width:32px;height:32px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.wa-name{font-size:13px;font-weight:500;}
+.wa-online{font-size:10px;color:#25d366;}
+.wa-bubble{background:#1f2c34;border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:12px;line-height:1.6;color:#e8e8e8;margin-bottom:6px;}
+.wa-amount{font-size:18px;font-weight:600;color:#25d366;display:block;margin:4px 0;}
+.wa-time{font-size:10px;color:#6b7280;text-align:right;margin-top:4px;}
+.forecast-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.forecast-day{font-size:11px;color:var(--muted);width:28px;flex-shrink:0;}
+.forecast-bar-wrap{flex:1;background:rgba(255,255,255,0.05);border-radius:4px;height:8px;overflow:hidden;}
+.forecast-bar{height:8px;border-radius:4px;}
+.forecast-pct{font-size:11px;font-family:'DM Mono',monospace;width:32px;text-align:right;color:var(--muted);}
+.gps-score-ring{display:flex;align-items:center;gap:20px;}
+.ring-wrap{position:relative;width:100px;height:100px;flex-shrink:0;}
+.ring-wrap svg{width:100%;height:100%;}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-num{font-size:22px;font-weight:500;letter-spacing:-0.5px;}
+.ring-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+.signal-list{flex:1;}
+.signal-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px;}
+.signal-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.signal-name{flex:1;color:var(--muted);}
+.signal-val{font-family:'DM Mono',monospace;font-size:11px;}
+.signal-bar-wrap{width:60px;background:rgba(255,255,255,0.06);border-radius:3px;height:4px;flex-shrink:0;}
+.signal-bar{height:4px;border-radius:3px;}
+.fraud-alert{background:var(--rs);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;}
+.fraud-alert:last-child{margin-bottom:0;}
+.fraud-title{font-size:13px;font-weight:500;color:var(--red);}
+.fraud-meta{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;}
+.fraud-score{font-family:'DM Mono',monospace;font-size:11px;color:var(--red);margin-top:4px;}
+.breakdown-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
+.breakdown-row:last-child{border-bottom:none;}
+.breakdown-label{color:var(--muted);}
+.breakdown-val{font-family:'DM Mono',monospace;}
+.breakdown-val.plus{color:var(--red);}
+.breakdown-val.minus{color:var(--green);}
+.trigger-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.trigger-row:last-child{border-bottom:none;}
+.trigger-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);width:36px;flex-shrink:0;}
+.trigger-bar-wrap{width:90px;background:rgba(255,255,255,0.06);border-radius:4px;height:5px;flex-shrink:0;}
+.trigger-bar{height:5px;border-radius:4px;}
+.trigger-pct{font-size:11px;color:var(--muted);width:30px;text-align:right;font-family:'DM Mono',monospace;}
+.map-area{background:#0f1623;border-radius:10px;height:200px;position:relative;overflow:hidden;border:1px solid var(--border);}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:30px 30px;}
+.zone-cell{position:absolute;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'DM Mono',monospace;font-weight:500;}
+.zone-low{background:rgba(16,185,129,0.2);color:#10b981;border:1px solid rgba(16,185,129,0.3);}
+.zone-med{background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);}
+.zone-high{background:rgba(239,68,68,0.25);color:#ef4444;border:1px solid rgba(239,68,68,0.35);}
+.zone-crit{background:rgba(239,68,68,0.45);color:#fca5a5;border:1px solid rgba(239,68,68,0.5);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.6}}
+.map-pin{position:absolute;transform:translate(-50%,-100%);font-size:18px;}
+.map-legend{display:flex;gap:12px;margin-top:10px;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+.legend-dot{width:8px;height:8px;border-radius:2px;}
+.timeline{position:relative;padding-left:20px;}
+.timeline::before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:1px;background:var(--border-s);}
+.tl-event{position:relative;margin-bottom:18px;}
+.tl-dot{position:absolute;left:-20px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);}
+.tl-time{font-size:10px;color:var(--muted);margin-bottom:3px;font-family:'DM Mono',monospace;}
+.tl-title{font-size:12px;font-weight:500;}
+.tl-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.view-panel{display:none;}
+.view-panel.active{display:block;}
+.section{margin-bottom:20px;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.btn-ghost:hover{color:var(--text);border-color:var(--border-s);}
+.mono{font-family:'DM Mono',monospace;}
+.green{color:var(--green);}
+.amber{color:var(--amber);}
+.red{color:var(--red);}
+.muted{color:var(--muted);}
+.flex{display:flex;}
+.items-center{align-items:center;}
+.justify-between{justify-content:space-between;}
+.mb-4{margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">🛡️ GigGuard</div>
+    <div class="logo-sub">Income Protection Platform</div>
+  </div>
+  <div class="nav-section">Overview</div>
+  <div class="nav-item active" onclick="sv('worker')"><span>⊡</span> Dashboard</div>
+  <div class="nav-item" onclick="sv('map')"><span>◉</span> Zone Map</div>
+  <div class="nav-item" onclick="sv('payouts')"><span>₹</span> Payouts</div>
+  <div class="nav-section">Protection</div>
+  <div class="nav-item" onclick="sv('gps')"><span>▲</span> TrustGPS Guard</div>
+  <div class="nav-item" onclick="sv('triggers')"><span>◈</span> Triggers</div>
+  <div class="nav-section">Account</div>
+  <div class="nav-item" onclick="sv('premium')"><span>◇</span> My Premium</div>
+  <div class="nav-item" onclick="sv('admin')"><span>◈</span> Admin View</div>
+  <div class="worker-badge">
+    <div class="worker-name">Mohan Ram.</div>
+    <div class="worker-meta">Swiggy · Velachery, Chennai</div>
+    <div class="worker-plan">🟣 Pro Plan · ₹79/wk</div>
+  </div>
+</aside>
+<main class="main">
+  <div class="header">
+    <div>
+      <div class="header-title" id="page-title">Worker Dashboard</div>
+      <div class="header-sub" id="page-sub">Week of 14–20 Oct 2024 · Velachery Zone</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="view-toggle">
+        <button class="vt-btn active" onclick="setMode('worker',this)">Worker</button>
+        <button class="vt-btn" onclick="setMode('admin',this)">Admin</button>
+      </div>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- WORKER -->
+    <div class="view-panel active" id="panel-worker">
+      <div class="risk-banner amber">
+        <div class="risk-status">
+          <div class="risk-dot amber"></div>
+          <div>
+            <div class="risk-label">⚠️ MODERATE RISK — Cyclone Watch</div>
+            <div class="risk-zone">Velachery · Chennai · DRS updating every 30 min</div>
+          </div>
+        </div>
+        <div class="drs-badge amber">DRS: 68</div>
+      </div>
+      <div class="grid-4 section">
+        <div class="stat-card"><div class="stat-glow" style="background:var(--green)"></div><div class="stat-label">This Week's Cover</div><div class="stat-value green">₹1,400</div><div class="stat-sub">Pro plan · Max payout</div></div>
+        <div class="stat-card"><div class="stat-glow" style="background:var(--accent)"></div><div class="stat-label">Total Paid Out</div><div class="stat-value">₹5,840</div><div class="stat-sub">12 events · 6 months</div></div>
+        <div class="stat-card"><div class="stat-glow" style="background:var(--purple)"></div><div class="stat-label">Premium This Week</div><div class="stat-value">₹74</div><div class="stat-sub">Adjusted for Cyclone risk</div></div>
+        <div class="stat-card"><div class="stat-glow" style="background:var(--teal)"></div><div class="stat-label">TrustGPS Score</div><div class="stat-value" style="color:var(--teal)">94</div><div class="stat-sub">High confidence ✓</div></div>
+      </div>
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">Latest Notification</div>
+          <div class="wa-phone">
+            <div class="wa-header"><div class="wa-avatar">🛡️</div><div><div class="wa-name">GigGuard</div><div class="wa-online">● Online</div></div></div>
+            <div class="wa-bubble">☔ Heavy rainfall detected in <strong>Velachery, Chennai</strong><br><br><span class="wa-amount">₹480 transferred</span>to your UPI (XXXX9821)<br><br>Event: Monsoon Blackout · T-01<br>Rainfall: 67mm in 6hrs · Stay safe 🛡️<div class="wa-time">Today, 2:34 PM ✓✓</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Payouts</div>
+          <div class="event-row"><div class="event-icon" style="background:rgba(59,130,246,0.12)">🌧️</div><div class="event-info"><div class="event-title">Monsoon Blackout</div><div class="event-meta">Today · 67mm · T-01</div><span class="event-status status-paid">PAID</span></div><div class="event-amount">+₹480</div></div>
+          <div class="event-row"><div class="event-icon" style="background:rgba(245,158,11,0.12)">☁️</div><div class="event-info"><div class="event-title">Toxic Air Day</div><div class="event-meta">Oct 11 · AQI 347 · T-03</div><span class="event-status status-paid">PAID</span></div><div class="event-amount">+₹560</div></div>
+          <div class="event-row"><div class="event-icon" style="background:rgba(239,68,68,0.1)">🌊</div><div class="event-info"><div class="event-title">Flood Emergency</div><div class="event-meta">Oct 4 · IMD Red Alert · T-04</div><span class="event-status status-paid">PAID</span></div><div class="event-amount">+₹1,000</div></div>
+          <div class="event-row"><div class="event-icon" style="background:rgba(139,92,246,0.12)">🚫</div><div class="event-info"><div class="event-title">Zone Lockdown</div><div class="event-meta">Sep 28 · Strike · GPS hold</div><span class="event-status status-held">HELD 90MIN</span></div><div class="event-amount amber">+₹700</div></div>
+        </div>
+      </div>
+      <div class="card section">
+        <div class="flex justify-between items-center mb-4">
+          <div class="card-title" style="margin-bottom:0">7-Day Disruption Forecast</div>
+          <div class="muted" style="font-size:11px">Prophet ML · Velachery Zone</div>
+        </div>
+        <div class="forecast-row"><span class="forecast-day">Mon</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="width:72%;background:var(--amber)"></div></div><span class="forecast-pct amber">72%</span></div>
+        <div class="forecast-row"><span class="forecast-day">Tue</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="width:88%;background:var(--red)"></div></div><span class="forecast-pct red">88%</span></div>
+        <div class="forecast-row"><span class="forecast-day">Wed</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="width:91%;background:var(--red)"></div></div><span class="forecast-pct red">91%</span></div>
+        <div class="forecast-row"><span class="forecast-day">Thu</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="width:65%;background:var(--amber)"></div></div><span class="forecast-pct amber">65%</span></div>
+        <div class="forecast-row"><span class="forecast-day">Fri</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="width:38%;background:var(--accent)"></div></div><span class="forecast-pct" style="color:var(--accent)">38%</span></div>
+        <div class="forecast-row"><span class="forecast-day">Sat</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="width:22%;background:var(--green)"></div></div><span class="forecast-pct green">22%</span></div>
+        <div class="forecast-row"><span class="forecast-day">Sun</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="width:15%;background:var(--green)"></div></div><span class="forecast-pct green">15%</span></div>
+      </div>
+    </div>
+
+    <!-- GPS -->
+    <div class="view-panel" id="panel-gps">
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">TrustGPS Score — Live Session</div>
+          <div class="gps-score-ring">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--teal)" stroke-width="8" stroke-dasharray="213" stroke-dashoffset="21" stroke-linecap="round" transform="rotate(-90 50 50)"/></svg>
+              <div class="ring-center"><div class="ring-num" style="color:var(--teal)">94</div><div class="ring-lbl">TrustGPS</div></div>
+            </div>
+            <div class="signal-list">
+              <div class="signal-row"><div class="signal-dot" style="background:var(--green)"></div><div class="signal-name">Cell Tower Match</div><div class="signal-bar-wrap"><div class="signal-bar" style="width:96%;background:var(--green)"></div></div><div class="signal-val green">96</div></div>
+              <div class="signal-row"><div class="signal-dot" style="background:var(--green)"></div><div class="signal-name">Motion Coherence</div><div class="signal-bar-wrap"><div class="signal-bar" style="width:91%;background:var(--green)"></div></div><div class="signal-val green">91</div></div>
+              <div class="signal-row"><div class="signal-dot" style="background:var(--green)"></div><div class="signal-name">Zone Footprint</div><div class="signal-bar-wrap"><div class="signal-bar" style="width:98%;background:var(--green)"></div></div><div class="signal-val green">98</div></div>
+              <div class="signal-row"><div class="signal-dot" style="background:var(--amber)"></div><div class="signal-name">Platform Telemetry</div><div class="signal-bar-wrap"><div class="signal-bar" style="width:88%;background:var(--amber)"></div></div><div class="signal-val amber">88</div></div>
+              <div class="signal-row"><div class="signal-dot" style="background:var(--green)"></div><div class="signal-name">Beacon Fingerprint</div><div class="signal-bar-wrap"><div class="signal-bar" style="width:93%;background:var(--green)"></div></div><div class="signal-val green">93</div></div>
+            </div>
+          </div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:10px">
+            <div style="background:var(--gs);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--green);flex:1">✓ Auto-Approved<br><span style="font-size:10px;color:var(--muted)">Score ≥ 80</span></div>
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;flex:1">⏱ 4 min payout<br><span style="font-size:10px;color:var(--muted)">No human review</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Simulate GPS Spoofing Attack</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Click a scenario to see how TrustGPS responds:</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="btn-ghost" onclick="sim('legit')">✅ Legit Worker</button>
+            <button class="btn-ghost" onclick="sim('teleport')">🚨 GPS Teleport</button>
+            <button class="btn-ghost" onclick="sim('static')">🚨 Static Spoof</button>
+            <button class="btn-ghost" onclick="sim('crosscity')">🚨 Cross-City</button>
+          </div>
+          <div id="spoof-result" style="background:var(--gs);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:14px;font-size:12px">
+            <div style="font-weight:500;color:var(--green);margin-bottom:6px">✅ Legitimate Worker Detected</div>
+            <div style="color:var(--muted);line-height:1.7">Cell towers: Velachery ✓<br>Motion: Delivery pattern detected ✓<br>Zone: 4yr footprint match ✓<br>GPS velocity: 23 km/h (normal) ✓<br><strong style="color:var(--green);display:block;margin-top:6px">TrustGPS: 94 → AUTO-APPROVE</strong></div>
+          </div>
+          <div style="margin-top:14px">
+            <div class="card-title">Flagged This Week</div>
+            <div class="fraud-alert"><div style="font-size:16px;margin-top:1px">⚠️</div><div><div class="fraud-title">GPS Velocity Anomaly</div><div class="fraud-meta">Account #GS-4721 · Oct 12<br>Coordinate jumped 8km in 4 seconds</div><div class="fraud-score">TrustGPS: 18 → REJECTED</div></div></div>
+            <div class="fraud-alert"><div style="font-size:16px;margin-top:1px">⚠️</div><div><div class="fraud-title">Cell Tower Mismatch</div><div class="fraud-meta">Account #GS-9103 · Oct 11<br>GPS: Velachery · Towers: Coimbatore (450km)</div><div class="fraud-score">TrustGPS: 4 → REJECTED</div></div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Pipeline SVG -->
+      <div class="card section">
+        <div class="card-title">TrustGPS Decision Pipeline</div>
+        <svg width="100%" viewBox="0 0 680 180" style="font-family:'DM Sans',sans-serif">
+          <defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <rect x="10" y="70" width="100" height="40" rx="8" fill="rgba(59,130,246,0.15)" stroke="rgba(59,130,246,0.4)" stroke-width="0.5"/>
+          <text x="60" y="87" text-anchor="middle" fill="#e8eaf2" font-size="11" font-weight="500">DRS &gt; 70</text>
+          <text x="60" y="101" text-anchor="middle" fill="#6b7280" font-size="10">Event triggered</text>
+          <line x1="110" y1="90" x2="138" y2="90" stroke="rgba(255,255,255,0.2)" stroke-width="1" marker-end="url(#arr)"/>
+          <rect x="140" y="60" width="110" height="60" rx="8" fill="rgba(20,184,166,0.12)" stroke="rgba(20,184,166,0.35)" stroke-width="0.5"/>
+          <text x="195" y="83" text-anchor="middle" fill="#14b8a6" font-size="11" font-weight="500">TrustGPS</text>
+          <text x="195" y="97" text-anchor="middle" fill="#6b7280" font-size="10">5 signals</text>
+          <text x="195" y="111" text-anchor="middle" fill="#6b7280" font-size="10">composite score</text>
+          <line x1="250" y1="90" x2="278" y2="90" stroke="rgba(255,255,255,0.2)" stroke-width="1" marker-end="url(#arr)"/>
+          <rect x="280" y="60" width="100" height="60" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.14)" stroke-width="0.5"/>
+          <text x="330" y="84" text-anchor="middle" fill="#e8eaf2" font-size="11" font-weight="500">Score Check</text>
+          <text x="330" y="99" text-anchor="middle" fill="#6b7280" font-size="10">80+ / 55-79 / &lt;55</text>
+          <line x1="380" y1="75" x2="420" y2="42" stroke="rgba(16,185,129,0.5)" stroke-width="1" marker-end="url(#arr)"/>
+          <line x1="380" y1="90" x2="420" y2="90" stroke="rgba(245,158,11,0.5)" stroke-width="1" marker-end="url(#arr)"/>
+          <line x1="380" y1="105" x2="420" y2="138" stroke="rgba(239,68,68,0.5)" stroke-width="1" marker-end="url(#arr)"/>
+          <text x="398" y="38" text-anchor="middle" fill="#10b981" font-size="9">≥80</text>
+          <text x="400" y="85" text-anchor="middle" fill="#f59e0b" font-size="9">55-79</text>
+          <text x="400" y="133" text-anchor="middle" fill="#ef4444" font-size="9">&lt;55</text>
+          <rect x="422" y="18" width="100" height="48" rx="8" fill="rgba(16,185,129,0.12)" stroke="rgba(16,185,129,0.3)" stroke-width="0.5"/>
+          <text x="472" y="38" text-anchor="middle" fill="#10b981" font-size="10" font-weight="500">AUTO-APPROVE</text>
+          <text x="472" y="53" text-anchor="middle" fill="#6b7280" font-size="10">UPI in &lt;4 min</text>
+          <rect x="422" y="66" width="100" height="48" rx="8" fill="rgba(245,158,11,0.1)" stroke="rgba(245,158,11,0.3)" stroke-width="0.5"/>
+          <text x="472" y="86" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="500">HOLD 90 MIN</text>
+          <text x="472" y="101" text-anchor="middle" fill="#6b7280" font-size="10">Re-validate</text>
+          <rect x="422" y="114" width="100" height="48" rx="8" fill="rgba(239,68,68,0.1)" stroke="rgba(239,68,68,0.3)" stroke-width="0.5"/>
+          <text x="472" y="134" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="500">AUTO-REJECT</text>
+          <text x="472" y="149" text-anchor="middle" fill="#6b7280" font-size="10">Fraud queue</text>
+          <line x1="522" y1="42" x2="555" y2="80" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+          <line x1="522" y1="90" x2="555" y2="90" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+          <rect x="557" y="60" width="115" height="60" rx="8" fill="rgba(139,92,246,0.1)" stroke="rgba(139,92,246,0.3)" stroke-width="0.5"/>
+          <text x="614" y="83" text-anchor="middle" fill="#8b5cf6" font-size="10" font-weight="500">TruthNet Check</text>
+          <text x="614" y="97" text-anchor="middle" fill="#6b7280" font-size="10">Fraud scoring</text>
+          <text x="614" y="111" text-anchor="middle" fill="#6b7280" font-size="10">→ UPI Payout</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- TRIGGERS -->
+    <div class="view-panel" id="panel-triggers">
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">Live Trigger Probability</div>
+          <div class="trigger-row"><div class="trigger-id">T-01</div><div style="flex:1;font-size:13px">🌧️ Monsoon Blackout</div><div class="trigger-bar-wrap"><div class="trigger-bar" style="width:82%;background:var(--red)"></div></div><div class="trigger-pct red">82%</div></div>
+          <div class="trigger-row"><div class="trigger-id">T-02</div><div style="flex:1;font-size:13px">🔥 Heat Lockout</div><div class="trigger-bar-wrap"><div class="trigger-bar" style="width:12%;background:var(--green)"></div></div><div class="trigger-pct green">12%</div></div>
+          <div class="trigger-row"><div class="trigger-id">T-03</div><div style="flex:1;font-size:13px">☁️ Toxic Air Day</div><div class="trigger-bar-wrap"><div class="trigger-bar" style="width:45%;background:var(--amber)"></div></div><div class="trigger-pct amber">45%</div></div>
+          <div class="trigger-row"><div class="trigger-id">T-04</div><div style="flex:1;font-size:13px">🌊 Flood Emergency</div><div class="trigger-bar-wrap"><div class="trigger-bar" style="width:78%;background:var(--red)"></div></div><div class="trigger-pct red">78%</div></div>
+          <div class="trigger-row"><div class="trigger-id">T-05</div><div style="flex:1;font-size:13px">🚫 Zone Lockdown</div><div class="trigger-bar-wrap"><div class="trigger-bar" style="width:8%;background:var(--green)"></div></div><div class="trigger-pct green">8%</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Current Sensor Readings</div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">Rainfall (6hr)</div><div class="mono red" style="font-size:13px">67mm</div><span class="event-status status-paid" style="margin-left:8px">TRIGGERED</span></div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">Temperature</div><div class="mono" style="font-size:13px">34°C</div><span class="event-status" style="margin-left:8px;background:var(--gs);color:var(--green)">SAFE</span></div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">AQI (4hr avg)</div><div class="mono amber" style="font-size:13px">218</div><span class="event-status" style="margin-left:8px;background:var(--as);color:var(--amber)">WATCH</span></div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">IMD Alert Level</div><div class="mono red" style="font-size:13px">ORANGE</div><span class="event-status status-paid" style="margin-left:8px">ACTIVE</span></div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">Zone Status</div><div class="mono green" style="font-size:13px">OPEN</div><span class="event-status" style="margin-left:8px;background:var(--gs);color:var(--green)">SAFE</span></div>
+        </div>
+      </div>
+      <div class="card section">
+        <div class="card-title">HyperZone Intelligence Engine — DRS 68 Breakdown</div>
+        <div style="display:flex;gap:30px;align-items:center">
+          <svg width="160" height="100" viewBox="0 0 160 100">
+            <path d="M20 90 A 60 60 0 0 1 140 90" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12" stroke-linecap="round"/>
+            <path d="M20 90 A 60 60 0 0 1 140 90" fill="none" stroke="#f59e0b" stroke-width="12" stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="57"/>
+            <text x="80" y="82" text-anchor="middle" fill="#f59e0b" font-size="22" font-weight="500" font-family="'DM Sans',sans-serif">68</text>
+          </svg>
+          <div style="flex:1">
+            <div class="breakdown-row"><span class="breakdown-label">Rainfall signal</span><span class="breakdown-val plus">+31</span></div>
+            <div class="breakdown-row"><span class="breakdown-label">AQI signal</span><span class="breakdown-val plus">+12</span></div>
+            <div class="breakdown-row"><span class="breakdown-label">Wind speed</span><span class="breakdown-val plus">+8</span></div>
+            <div class="breakdown-row"><span class="breakdown-label">Traffic index</span><span class="breakdown-val plus">+6</span></div>
+            <div class="breakdown-row"><span class="breakdown-label">IMD orange alert</span><span class="breakdown-val plus">+14</span></div>
+            <div class="breakdown-row"><span class="breakdown-label">Social signals</span><span class="breakdown-val plus">+3</span></div>
+            <div class="breakdown-row"><span class="breakdown-label">Historical base</span><span class="breakdown-val">-6</span></div>
+            <div class="breakdown-row" style="border-top:1px solid var(--border-s);margin-top:4px;padding-top:8px"><span style="font-weight:500">DRS Score</span><span class="breakdown-val amber" style="font-size:14px">68</span></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:11px;color:var(--muted);background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 14px">
+          ℹ️ DRS 68 — 2 points below trigger threshold (70). If T-01 rainfall exceeds 50mm sustained, payout pipeline activates automatically.
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="view-panel" id="panel-map">
+      <div class="card section">
+        <div class="flex justify-between items-center mb-4">
+          <div class="card-title" style="margin-bottom:0">Velachery Zone — Live DRS Heatmap</div>
+          <div class="muted" style="font-size:11px">500m × 500m grid · Updated 2 min ago</div>
+        </div>
+        <div class="map-area">
+          <div class="map-grid"></div>
+          <div class="zone-cell zone-low" style="left:5%;top:10%;width:18%;height:25%">24</div>
+          <div class="zone-cell zone-med" style="left:25%;top:5%;width:18%;height:25%">61</div>
+          <div class="zone-cell zone-high" style="left:45%;top:5%;width:20%;height:28%">79</div>
+          <div class="zone-cell zone-crit" style="left:67%;top:5%;width:18%;height:28%">92</div>
+          <div class="zone-cell zone-med" style="left:5%;top:40%;width:18%;height:25%">58</div>
+          <div class="zone-cell zone-high" style="left:25%;top:35%;width:20%;height:28%">73</div>
+          <div class="zone-cell zone-high" style="left:47%;top:38%;width:20%;height:25%">76</div>
+          <div class="zone-cell zone-high" style="left:69%;top:38%;width:18%;height:25%">76</div>
+          <div class="zone-cell zone-low" style="left:5%;top:70%;width:18%;height:25%">32</div>
+          <div class="zone-cell zone-med" style="left:25%;top:68%;width:20%;height:25%">55</div>
+          <div class="zone-cell zone-med" style="left:47%;top:68%;width:20%;height:25%">63</div>
+          <div class="zone-cell zone-low" style="left:69%;top:68%;width:18%;height:25%">41</div>
+          <div class="map-pin" style="left:35%;top:62%">📍</div>
+        </div>
+        <div class="map-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(16,185,129,0.5)"></div>Low (0-50)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(245,158,11,0.5)"></div>Medium (51-70)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.5)"></div>High (71-90)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.8)"></div>Critical (91+)</div>
+          <div class="legend-item">📍 Your location</div>
+        </div>
+      </div>
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">Your Zone: Velachery South</div>
+          <div style="font-size:28px;font-weight:500;color:var(--amber)">DRS 68</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Moderate Risk · Cyclone watch active</div>
+          <div style="margin-top:12px;font-size:12px;line-height:1.9;color:var(--muted)">📍 500m cell: 12.9853° N, 80.2170° E<br>⏱ Next update: 28 minutes<br>🌧️ Trigger threshold: 70 (2pts away)</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Nearby Zone Alerts</div>
+          <div class="event-row"><div class="event-icon" style="background:var(--rs)">🔴</div><div class="event-info"><div class="event-title">Adyar North — DRS 92</div><div class="event-meta">CRITICAL · Payouts active now</div></div></div>
+          <div class="event-row"><div class="event-icon" style="background:var(--rs)">🔴</div><div class="event-info"><div class="event-title">Taramani — DRS 88</div><div class="event-meta">HIGH · Pipeline triggered</div></div></div>
+          <div class="event-row"><div class="event-icon" style="background:var(--as)">🟡</div><div class="event-info"><div class="event-title">Sholinganallur — DRS 73</div><div class="event-meta">HIGH · Monitoring</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYOUTS -->
+    <div class="view-panel" id="panel-payouts">
+      <div class="grid-4 section">
+        <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-value green">₹5,840</div><div class="stat-sub">6 months</div></div>
+        <div class="stat-card"><div class="stat-label">Total Events</div><div class="stat-value">12</div><div class="stat-sub">All triggers</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Payout Time</div><div class="stat-value">4.2m</div><div class="stat-sub">Trigger to UPI</div></div>
+        <div class="stat-card"><div class="stat-label">Loss Covered</div><div class="stat-value amber">76%</div><div class="stat-sub">Of disruption income</div></div>
+      </div>
+      <div class="card section">
+        <div class="card-title">Payout Timeline</div>
+        <div class="timeline">
+          <div class="tl-event"><div class="tl-dot" style="background:var(--green)"></div><div class="tl-time">Today, 14 Oct 2024 · 14:34</div><div class="tl-title">Monsoon Blackout (T-01) · <span class="green">₹480 paid</span></div><div class="tl-sub">67mm rainfall · DRS 89 · TrustGPS 94 · 3m 48s to UPI</div></div>
+          <div class="tl-event"><div class="tl-dot" style="background:var(--green)"></div><div class="tl-time">11 Oct 2024 · 10:12</div><div class="tl-title">Toxic Air Day (T-03) · <span class="green">₹560 paid</span></div><div class="tl-sub">AQI 347 sustained 5hrs · DRS 82 · TrustGPS 91 · 4m 02s</div></div>
+          <div class="tl-event"><div class="tl-dot" style="background:var(--green)"></div><div class="tl-time">4 Oct 2024 · 06:45</div><div class="tl-title">Flood Emergency (T-04) · <span class="green">₹1,000 paid</span></div><div class="tl-sub">IMD Red Alert + Velachery waterlogged · DRS 97 · 2m 11s</div></div>
+          <div class="tl-event"><div class="tl-dot" style="background:var(--amber)"></div><div class="tl-time">28 Sep 2024 · 08:30</div><div class="tl-title">Zone Lockdown (T-05) · <span class="amber">₹700 paid (90min hold)</span></div><div class="tl-sub">TrustGPS 62 → held → re-scored 84 → approved</div></div>
+          <div class="tl-event"><div class="tl-dot" style="background:var(--green)"></div><div class="tl-time">19 Sep 2024 · 15:22</div><div class="tl-title">Monsoon Blackout (T-01) · <span class="green">₹480 paid</span></div><div class="tl-sub">54mm rainfall · DRS 78 · TrustGPS 97 · 4m 30s</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREMIUM -->
+    <div class="view-panel" id="panel-premium">
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">This Week's Premium</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:16px"><div style="font-size:34px;font-weight:500;letter-spacing:-1px">₹74</div><div style="font-size:13px;color:var(--muted)">/ week</div></div>
+          <div class="breakdown-row"><span class="breakdown-label">🟣 Pro plan base</span><span class="breakdown-val">₹49</span></div>
+          <div class="breakdown-row"><span class="breakdown-label">Zone risk (flood-prone)</span><span class="breakdown-val plus">+₹12</span></div>
+          <div class="breakdown-row"><span class="breakdown-label">Cyclone forecast</span><span class="breakdown-val plus">+₹18</span></div>
+          <div class="breakdown-row"><span class="breakdown-label">Loyalty (8 clean weeks)</span><span class="breakdown-val minus">-₹5</span></div>
+          <div class="breakdown-row" style="border-top:1px solid var(--border-s);margin-top:6px;padding-top:8px"><span style="font-weight:500">Final Premium</span><span class="breakdown-val" style="font-size:15px">₹74</span></div>
+          <div style="margin-top:14px;padding:10px 14px;background:var(--ps);border-radius:8px;border:1px solid rgba(139,92,246,0.2);font-size:11px;color:var(--purple)">✓ Auto-deducted Monday 06:00 AM from UPI XXXX9821</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Coverage Limits — Pro Plan</div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">T-01 Monsoon Blackout</div><div class="mono green">₹1,400</div></div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">T-02 Heat Lockout</div><div class="mono green">₹840</div></div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">T-03 Toxic Air Day</div><div class="mono green">₹1,120</div></div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">T-04 Flood Emergency</div><div class="mono green">₹1,400</div></div>
+          <div class="trigger-row"><div style="flex:1;font-size:13px">T-05 Zone Lockdown</div><div class="mono green">₹1,400</div></div>
+          <div style="margin-top:12px;padding:10px;background:var(--gs);border-radius:8px;font-size:12px;color:var(--green)">🛡️ Max Weekly Payout: ₹1,400 · Pro Plan</div>
+          <div style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;font-size:11px;color:var(--muted)">✨ Auto-Pause: If inactive 5+ days, premium pauses automatically.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="view-panel" id="panel-admin">
+      <div class="grid-4 section">
+        <div class="stat-card"><div class="stat-label">Active Workers</div><div class="stat-value">8,241</div><div class="stat-sub">Chennai zone</div></div>
+        <div class="stat-card"><div class="stat-label">Payouts Today</div><div class="stat-value green">₹12.4L</div><div class="stat-sub">1,847 workers</div></div>
+        <div class="stat-card"><div class="stat-label">GPS Fraud Blocked</div><div class="stat-value red">23</div><div class="stat-sub">TrustGPS catches</div></div>
+        <div class="stat-card"><div class="stat-label">Loss Ratio</div><div class="stat-value amber">68%</div><div class="stat-sub">Target: 75%</div></div>
+      </div>
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">Active Disruptions — Chennai</div>
+          <div class="event-row"><div class="event-icon" style="background:var(--rs)">🌊</div><div class="event-info"><div class="event-title">Adyar North — T-01 Active</div><div class="event-meta">DRS 92 · 847 workers · ₹4.1L payout queue</div></div><span class="event-status status-paid">LIVE</span></div>
+          <div class="event-row"><div class="event-icon" style="background:var(--rs)">🌧️</div><div class="event-info"><div class="event-title">Taramani — T-01 Active</div><div class="event-meta">DRS 88 · 612 workers · ₹2.9L payout queue</div></div><span class="event-status status-paid">LIVE</span></div>
+          <div class="event-row"><div class="event-icon" style="background:var(--as)">⚠️</div><div class="event-info"><div class="event-title">Velachery — Watch</div><div class="event-meta">DRS 68 · 1,241 workers · Threshold: 70</div></div><span class="event-status status-held">WATCH</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">TrustGPS Fraud Queue — Today</div>
+          <div class="fraud-alert"><div style="font-size:16px;margin-top:1px">🚨</div><div><div class="fraud-title">GPS Teleportation · 3 accounts</div><div class="fraud-meta">Coordinates jumped 5–12km in under 5 seconds. Pattern matches known spoofing cluster.</div><div class="fraud-score">Scores: 4, 11, 18 → ALL REJECTED · ₹2,100 blocked</div></div></div>
+          <div class="fraud-alert"><div style="font-size:16px;margin-top:1px">⚠️</div><div><div class="fraud-title">Cross-City Mismatch · 1 account</div><div class="fraud-meta">GPS: Chennai · Cell towers: Coimbatore (450km discrepancy)</div><div class="fraud-score">Score: 4 → REJECTED · ₹700 blocked</div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+<script>
+const panels={worker:'panel-worker',map:'panel-map',payouts:'panel-payouts',gps:'panel-gps',triggers:'panel-triggers',premium:'panel-premium',admin:'panel-admin'};
+const titles={worker:['Worker Dashboard','Week of 14–20 Oct 2024 · Velachery Zone'],map:['Zone Heatmap','Live DRS · Chennai Metro · 500m grid'],payouts:['Payout History','All events · 6 months · Dinesh Kumar'],gps:['TrustGPS Guard','Anti-spoofing engine · Live session'],triggers:['Parametric Triggers','HIE Engine · DRS Monitoring · Live'],premium:['My Premium','Week of 14 Oct · Dynamic pricing'],admin:['Admin Dashboard','Chennai Metro · Insurer View · Live']};
+const navIdx={worker:0,map:1,payouts:2,gps:3,triggers:4,premium:5,admin:6};
+function sv(view){
+  document.querySelectorAll('.view-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(panels[view]).classList.add('active');
+  document.getElementById('page-title').textContent=titles[view][0];
+  document.getElementById('page-sub').textContent=titles[view][1];
+  document.querySelectorAll('.nav-item')[navIdx[view]].classList.add('active');
+}
+function setMode(m,btn){
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  sv(m==='admin'?'admin':'worker');
+}
+const spoofScenarios={
+  legit:{bg:'var(--gs)',bc:'rgba(16,185,129,0.2)',c:'var(--green)',t:'✅ Legitimate Worker Detected',b:'Cell towers: Velachery ✓<br>Motion: Delivery pattern ✓<br>Zone: 4yr footprint match ✓<br>GPS velocity: 23 km/h ✓<br><strong style="color:var(--green);display:block;margin-top:6px">TrustGPS: 94 → AUTO-APPROVE</strong>'},
+  teleport:{bg:'var(--rs)',bc:'rgba(239,68,68,0.2)',c:'var(--red)',t:'🚨 GPS Teleportation Detected',b:'Cell towers: Ambattur (18km away) ✗<br>Motion: Jumped 9.2km in 3 seconds ✗<br>GPS velocity: 11,040 km/h (impossible) ✗<br>Device: Matches spoofing cluster ✗<br><strong style="color:var(--red);display:block;margin-top:6px">TrustGPS: 11 → AUTO-REJECTED</strong>'},
+  static:{bg:'var(--rs)',bc:'rgba(239,68,68,0.2)',c:'var(--red)',t:'🚨 Static GPS Emulation Detected',b:'Accelerometer: Zero variance 47min ✗<br>GPS: Perfectly static ✗<br>Motion: No delivery pattern ✗<br>Platform: 0 orders in 72hrs ✗<br><strong style="color:var(--red);display:block;margin-top:6px">TrustGPS: 22 → AUTO-REJECTED</strong>'},
+  crosscity:{bg:'var(--rs)',bc:'rgba(239,68,68,0.2)',c:'var(--red)',t:'🚨 Cross-City Location Mismatch',b:'GPS location: Velachery, Chennai ✗<br>Cell towers: Coimbatore (450km away) ✗<br>Zone footprint: Never delivered here ✗<br>Historical: First-time in disruption zone ✗<br><strong style="color:var(--red);display:block;margin-top:6px">TrustGPS: 4 → AUTO-REJECTED + Flagged</strong>'}
+};
+function sim(type){
+  const s=spoofScenarios[type],r=document.getElementById('spoof-result');
+  r.style.background=s.bg;r.style.borderColor=s.bc;
+  r.innerHTML=`<div style="font-weight:500;color:${s.c};margin-bottom:6px">${s.t}</div><div style="color:var(--muted);line-height:1.7">${s.b}</div>`;
+}
+</script>
+</body>
+</html>
